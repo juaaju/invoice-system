@@ -4,7 +4,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="container mx-auto px-6 py-6">
+      <header className="container mx-auto px-6 py-6 ">
         <div className="flex justify-between items-center">
           <div className="text-2xl font-bold text-gray-900">InvoiceFlow</div>
           <div className="flex items-center gap-4">
@@ -38,11 +38,11 @@ export default function LandingPage() {
             href="/register" 
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg inline-flex items-center gap-2 transition-colors"
           >
-            Coba Gratis →
+            Coba Gratis
           </Link>
           <Link 
             href="/demo" 
-            className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-8 py-4 rounded-lg font-semibold text-lg transition-colors"
+            className="border-2 border hover:border-gray-400 text-gray-700 px-8 py-4 rounded-lg font-semibold text-lg transition-colors"
           >
             Lihat Demo
           </Link>
@@ -92,9 +92,9 @@ export default function LandingPage() {
             </div>
 
             {/* Pro Plan */}
-            <div className="bg-white p-8 rounded-xl shadow-lg border-2 border-blue-500 relative transform scale-105">
+            <div className="bg-white p-8 rounded-xl shadow-lg border-2 border relative transform scale-105">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold">Paling Populer</span>
+                <span className="bg-black text-white px-4 py-1 rounded-full text-sm font-semibold">Paling Populer</span>
               </div>
               <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-6">
                 <span className="text-2xl">⭐</span>
@@ -175,7 +175,7 @@ export default function LandingPage() {
             href="/register" 
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg inline-flex items-center gap-2 transition-colors"
           >
-            Coba Gratis Sekarang →
+            Coba Sekarang
           </Link>
         </div>
       </section>

@@ -8,9 +8,16 @@ const handler = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
-  pages: {
-    signIn: "/login",
+  secret: process.env.NEXTAUTH_SECRET,
+  callbacks: {
+    async session({ session, token }) {
+        if (session.user) {
+            (session.user as any).id = token.sub; // bypass TS
+        }
+        return session;
+    }
   },
 });
+
 
 export { handler as GET, handler as POST };

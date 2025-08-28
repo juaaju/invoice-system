@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {signIn} from "next-auth/react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -17,7 +18,7 @@ export default function LoginPage() {
 
   const handleGoogleLogin = () => {
     // Handle Google OAuth
-    console.log("Google login clicked");
+    signIn("google", { callbackUrl: "/dashboard" });
   };
 
   return (
