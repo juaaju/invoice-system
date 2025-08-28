@@ -18,7 +18,10 @@ export default function LoginPage() {
 
   const handleGoogleLogin = () => {
     // Handle Google OAuth
-    signIn("google", { callbackUrl: "/dashboard" });
+    signIn("google", {
+      callbackUrl: "/dashboard",
+      redirect: true
+});
   };
 
   return (
