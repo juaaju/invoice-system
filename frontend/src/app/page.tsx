@@ -35,13 +35,13 @@ export default function LandingPage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link 
-            href="/register" 
+            href="/login" 
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg inline-flex items-center gap-2 transition-colors"
           >
             Coba Gratis
           </Link>
           <Link 
-            href="/demo" 
+            href="https://www.youtube.com/watch?v=PAOy-bCk8EU" 
             className="border-2 border hover:border-gray-400 text-gray-700 px-8 py-4 rounded-lg font-semibold text-lg transition-colors"
           >
             Lihat Demo
@@ -172,7 +172,7 @@ export default function LandingPage() {
             Bergabung dengan ribuan pengguna yang sudah memakai InvoiceFlow
           </p>
           <Link 
-            href="/register" 
+            href="/login" 
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg inline-flex items-center gap-2 transition-colors"
           >
             Coba Sekarang
