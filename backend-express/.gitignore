@@ -1,0 +1,14 @@
+# Credentials
+auth_info
+
+# Node modules
+node_modules
+
+# Prisma client build
+prisma/client
+
+# Temporary files
+tmp
+
+# Environment variables
+.env
