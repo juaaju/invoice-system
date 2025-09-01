@@ -5,7 +5,11 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
-app.use(cors()); // izinkan semua origin
+app.use(cors({
+  origin: "http://localhost:3000",  // asal Next.js
+  credentials: true
+}));
+
 app.use(express.json());
 
 const prisma = new PrismaClient();
@@ -24,11 +28,11 @@ async function getGoogleClient(userId) {
     process.env.NEXTAUTH_URL + "/api/auth/callback/google"
   );
 
-  oauth2Client.setCredentials({
+    oauth2Client.setCredentials({
     access_token: account.access_token,
-    refresh_token: account.refresh_token,
-    expiry_date: account.expires_at * 1000,
-  });
+    refresh_token: account.refresh_token || undefined,  // jangan kasih null
+    expiry_date: account.expires_at ? account.expires_at * 1000 : undefined,
+    });
 
   // auto refresh kalau expired
   oauth2Client.on("tokens", async (tokens) => {
@@ -79,6 +83,105 @@ app.post("/sheets/create/:userId", async (req, res) => {
     res.status(500).send("Gagal bikin spreadsheet baru");
   }
 });
+
+// Edit nama spreadsheet
+// pake id (UUID dari DB), bukan sheetId Google
+app.put("/sheets/update/:userId/:id", async (req, res) => {
+  try {
+    const { userId, id } = req.params;
+    const { name } = req.body;
+
+    // cari spreadsheet di DB
+    const spreadsheet = await prisma.spreadsheetList.findUnique({
+      where: { id: String(id) },
+    });
+
+    if (!spreadsheet) {
+      return res.status(404).json({ error: "Spreadsheet tidak ditemukan di DB" });
+    }
+
+    // Ambil sheetId Google dari URL
+    const match = spreadsheet.spreadsheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (!match) {
+      return res.status(400).json({ error: "Spreadsheet ID Google tidak valid" });
+    }
+    const sheetId = match[1];
+
+    // update di Google Sheets
+    const client = await getGoogleClient(userId);
+    const sheets = google.sheets({ version: "v4", auth: client });
+
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: sheetId,
+      requestBody: {
+        requests: [
+          {
+            updateSpreadsheetProperties: {
+              properties: { title: name },
+              fields: "title",
+            },
+          },
+        ],
+      },
+    });
+
+    // update juga di DB
+    const updated = await prisma.spreadsheetList.update({
+      where: { id: String(id) }, 
+      data: { name },
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Gagal update spreadsheet");
+  }
+});
+
+
+
+// Hapus spreadsheet
+// Hapus spreadsheet di DB + Google Drive
+app.delete("/sheets/:userId/:id", async (req, res) => {
+  try {
+    const { userId, id } = req.params;
+
+    // cari data spreadsheet di DB
+    const spreadsheet = await prisma.spreadsheetList.findUnique({
+      where: { id: String(id) }, // ✅ jangan parseInt
+    });
+
+    if (!spreadsheet) {
+      return res.status(404).json({ error: "Spreadsheet tidak ditemukan" });
+    }
+
+    // Ambil spreadsheetId dari URL
+    const match = spreadsheet.spreadsheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (!match) {
+      return res.status(400).json({ error: "Spreadsheet ID tidak valid" });
+    }
+    const spreadsheetId = match[1];
+
+    // Auth Google client
+    const client = await getGoogleClient(userId);
+    const drive = google.drive({ version: "v3", auth: client });
+
+    // Hapus dari Google Drive
+    await drive.files.delete({ fileId: spreadsheetId });
+
+    // Hapus record dari DB
+    await prisma.spreadsheetList.delete({
+      where: { id: String(id) }, // ✅ jangan parseInt
+    });
+
+    res.json({ message: "Spreadsheet berhasil dihapus dari Google Drive dan DB" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Gagal hapus spreadsheet" });
+  }
+});
+
+
 
 module.exports = app;
 // jalankan server
