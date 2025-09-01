@@ -25,6 +25,10 @@ export default function DashboardPage() {
   const [spreadsheets, setSpreadsheets] = useState<Spreadsheet[]>([]);
   const [user, setUser] = useState<User | null>(null);
 
+  const [loading, setLoading] = useState(false);
+  const [sheetName, setSheetName] = useState("");
+  const [result, setResult] = useState<{ url: string; spreadsheetId: string } | null>(null);
+
   useEffect(() => {
     if (status !== "authenticated") return;
 
@@ -39,68 +43,65 @@ export default function DashboardPage() {
       .then((data) => setSpreadsheets(data));
   }, [status]);
 
-  // const [spreadsheets, setSpreadsheets] = useState<Spreadsheet[]>([
-  //   {
-  //     id: "1",
-  //     nama: "Invoice Januari 2024",
-  //     tanggal_dibuat: "2024-01-15",
-  //     url: "https://docs.google.com/spreadsheets/d/example-1"
-  //   },
-  //   {
-  //     id: "2", 
-  //     nama: "Invoice Februari 2024",
-  //     tanggal_dibuat: "2024-02-01",
-  //     url: "https://docs.google.com/spreadsheets/d/example-2"
-  //   },
-  //   {
-  //     id: "3",
-  //     nama: "Laporan Keuangan Q1",
-  //     tanggal_dibuat: "2024-03-31",
-  //     url: "https://docs.google.com/spreadsheets/d/example-3"
-  //   }
-  // ]);
-
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingSheet, setEditingSheet] = useState<Spreadsheet | null>(null);
   const [nameSheet, setNameSheet] = useState("");
-
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newSheet: Spreadsheet = {
-      id: Date.now().toString(),
-      name: nameSheet,
-      createdAt: new Date().toISOString().split('T')[0],
-      spreadsheetUrl: `https://docs.google.com/spreadsheets/d/new-${Date.now()}`
-    };
-    setSpreadsheets([...spreadsheets, newSheet]);
-    setShowCreateModal(false);
-    setNameSheet("");
-  };
+  const userId = session?.user?.id as string | undefined;
+  // ambil userId misalnya dari props atau session
 
   const handleEdit = (sheet: Spreadsheet) => {
     setEditingSheet(sheet);
     setNameSheet(sheet.name);
   };
 
-  const handleUpdate = (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingSheet) return;
-    
-    const updatedSheets = spreadsheets.map(sheet => 
-      sheet.id === editingSheet.id 
-        ? { ...sheet, nama: nameSheet }
-        : sheet
-    );
-    setSpreadsheets(updatedSheets);
-    setEditingSheet(null);
-    setNameSheet("");
-  };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Yakin ingin menghapus spreadsheet ini?")) {
-      setSpreadsheets(spreadsheets.filter(sheet => sheet.id !== id));
+    try {
+      const res = await fetch(`http://localhost:5000/sheets/update/${userId}/${editingSheet.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: nameSheet }),
+      });
+
+      if (!res.ok) throw new Error("Gagal update sheet");
+
+      const data = await res.json();
+
+      // update state lokal dengan hasil dari server
+      const updatedSheets = spreadsheets.map((sheet) =>
+        sheet.id === editingSheet.id ? { ...sheet, name: data.name } : sheet
+      );
+
+      setSpreadsheets(updatedSheets);
+      setEditingSheet(null);
+      setNameSheet("");
+    } catch (err) {
+      console.error(err);
+      alert("Gagal update spreadsheet");
     }
   };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Yakin ingin menghapus spreadsheet ini?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/sheets/${userId}/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Gagal hapus sheet");
+
+      setSpreadsheets(spreadsheets.filter((sheet) => sheet.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Gagal hapus spreadsheet");
+    }
+  };
+
 
   const openSpreadsheet = (spreadsheetUrl: string) => {
     window.open(spreadsheetUrl, "_blank");
@@ -115,6 +116,58 @@ export default function DashboardPage() {
   // if (status === "loading") {
   //   return <p>Loading...</p>;
   // }
+  // hanlde create sps
+
+  const handleCreateSheet = async () => {
+    if (!userId) {
+      alert("UserId tidak ditemukan di session");
+      return;
+    }
+
+    if (!nameSheet.trim()) {
+      alert("Nama spreadsheet wajib diisi");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // pakai relative path, otomatis diproxy ke :5000
+      const res = await fetch(`/api/sheets/create/${userId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nameSheet }),
+        credentials: "include",   // 🔑 penting biar nggak CORS error
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Status: ${res.status}, Body: ${text}`);
+      }
+
+      const data = await res.json();
+      console.log("Sheet created:", data);
+
+      setResult(data);
+
+      // reset form dan tutup modal
+      setNameSheet("");
+      setShowCreateModal(false);
+
+      // kalau ada function buat refresh daftar sheet
+      // fetchSheets();
+    
+    } catch (err: any) {
+      console.error("Fetch error object:", err);
+      if (err instanceof Error) {
+        console.error("Error message:", err.message);
+      }
+      alert(err.message || "Terjadi error");
+    } finally {
+      setLoading(false);
+    }
+
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -242,13 +295,13 @@ export default function DashboardPage() {
 
       {/* Create/Edit Modal */}
       {(showCreateModal || editingSheet) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               {editingSheet ? "Edit Nama Spreadsheet" : "Buat Spreadsheet Baru"}
             </h3>
             
-            <form onSubmit={editingSheet ? handleUpdate : handleCreate} className="space-y-4">
+            <form onSubmit={editingSheet ? handleUpdate : handleCreateSheet} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Nama Spreadsheet</label>
                 <input
@@ -290,24 +343,55 @@ export default function DashboardPage() {
           <div className="bg-white rounded-2xl shadow-lg p-6 w-96">
             <h2 className="text-lg font-semibold mb-4">Koneksi WhatsApp</h2>
             <p className="text-sm text-gray-600 mb-6">
-              Scan QR Code untuk menghubungkan WhatsApp kamu 📱
+              Masukan no WA kamu dan pilih Spreadsheet untuk koneksi. Kemudian chat ke nomor bot 08xxxxxxx
             </p>
-            <div className="flex justify-center mb-6">
-              <div className="w-40 h-40 bg-gray-200 flex items-center justify-center text-gray-500">
-                QR CODE
-              </div>
+
+            {/* Input Nomor WA */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nomor WhatsApp
+              </label>
+              <input
+                type="text"
+                placeholder="Contoh: 6281234567890"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-            <div className="flex justify-end">
+
+            {/* Dropdown Spreadsheet */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Pilih Spreadsheet
+              </label>
+              <select
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Pilih Spreadsheet --</option>
+                <option value="sheet1">Spreadsheet 1</option>
+                <option value="sheet2">Spreadsheet 2</option>
+                <option value="sheet3">Spreadsheet 3</option>
+              </select>
+            </div>
+
+            {/* Tombol Aksi */}
+            <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowModal(false)}
                 className="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300"
               >
                 Tutup
               </button>
+              <button
+                onClick={() => console.log("Konek WA & Spreadsheet")}
+                className="px-4 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Konek
+              </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
