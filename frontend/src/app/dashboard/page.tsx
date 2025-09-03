@@ -25,6 +25,10 @@ export default function DashboardPage() {
   const [spreadsheets, setSpreadsheets] = useState<Spreadsheet[]>([]);
   const [user, setUser] = useState<User | null>(null);
 
+  const [selectedSpreadsheet, setSelectedSpreadsheet] = useState("");
+
+// ... useEffect ambil data seperti sudah kamu buat
+
   const [loading, setLoading] = useState(false);
   const [sheetName, setSheetName] = useState("");
   const [result, setResult] = useState<{ url: string; spreadsheetId: string } | null>(null);
@@ -168,8 +172,33 @@ export default function DashboardPage() {
 
   };
 
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+  const handleConnect = async () => {
+    const res = await fetch("/api/wa-connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phoneNumber,
+        spreadsheetId: selectedSpreadsheet,
+        userId: userId, // ✅ kirim dari frontend
+      }),
+    });
+
+    if (res.ok) {
+      console.log("Berhasil konek!");
+      alert("✅ Koneksi berhasil!");
+      setShowModal(false);
+    } else {
+      console.error("Gagal konek");
+      alert("❌ Gagal konek, coba lagi.");
+    }
+  };
+
+
 
   return (
+    
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
@@ -338,6 +367,8 @@ export default function DashboardPage() {
         </div>
       )}
 
+
+
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-2xl shadow-lg p-6 w-96">
@@ -353,6 +384,8 @@ export default function DashboardPage() {
               </label>
               <input
                 type="text"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="Contoh: 6281234567890"
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -364,12 +397,16 @@ export default function DashboardPage() {
                 Pilih Spreadsheet
               </label>
               <select
+                value={selectedSpreadsheet}
+                onChange={(e) => setSelectedSpreadsheet(e.target.value)}
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">-- Pilih Spreadsheet --</option>
-                <option value="sheet1">Spreadsheet 1</option>
-                <option value="sheet2">Spreadsheet 2</option>
-                <option value="sheet3">Spreadsheet 3</option>
+                {spreadsheets.map((sheet) => (
+                  <option key={sheet.id} value={sheet.id}>
+                    {sheet.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -382,8 +419,9 @@ export default function DashboardPage() {
                 Tutup
               </button>
               <button
-                onClick={() => console.log("Konek WA & Spreadsheet")}
+                onClick={handleConnect}
                 className="px-4 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                disabled={!selectedSpreadsheet || !phoneNumber}
               >
                 Konek
               </button>
@@ -391,6 +429,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
 
     </div>
   );
