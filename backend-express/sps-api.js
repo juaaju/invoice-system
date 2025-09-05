@@ -84,8 +84,6 @@ app.post("/sheets/create/:userId", async (req, res) => {
   }
 });
 
-// Edit nama spreadsheet
-// pake id (UUID dari DB), bukan sheetId Google
 app.put("/sheets/update/:userId/:id", async (req, res) => {
   try {
     const { userId, id } = req.params;
@@ -138,9 +136,6 @@ app.put("/sheets/update/:userId/:id", async (req, res) => {
   }
 });
 
-
-
-// Hapus spreadsheet
 // Hapus spreadsheet di DB + Google Drive
 app.delete("/sheets/:userId/:id", async (req, res) => {
   try {
@@ -181,7 +176,67 @@ app.delete("/sheets/:userId/:id", async (req, res) => {
   }
 });
 
+app.post("/sheets/append/:userId/:id", async (req, res) => {
+  try {
+    const { userId, id } = req.params;
+    const { data } = req.body; 
+    // data = { barang: "Beras", harga: 50000, jumlah: 2 }
 
+    if (!data || !data.barang || !data.harga || !data.jumlah) {
+      return res.status(400).json({ error: "Data tidak lengkap" });
+    }
+
+    // Ambil spreadsheet dari DB
+    const spreadsheet = await prisma.spreadsheetList.findUnique({
+      where: { id: String(id) },
+    });
+
+    if (!spreadsheet) return res.status(404).json({ error: "Spreadsheet tidak ditemukan" });
+
+    // Ambil ID Google Sheets dari URL
+    const match = spreadsheet.spreadsheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (!match) return res.status(400).json({ error: "Spreadsheet ID Google tidak valid" });
+
+    const sheetId = match[1];
+
+    // Auth Google client
+    const client = await getGoogleClient(userId);
+    const sheets = google.sheets({ version: "v4", auth: client });
+
+    // Cek apakah header sudah ada di Sheet1!A1:C1
+    const result = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: "Sheet1!A1:C1",
+    });
+
+    if (!result.data.values || result.data.values.length === 0) {
+      // tulis header jika kosong
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: sheetId,
+        range: "Sheet1!A1:C1",
+        valueInputOption: "USER_ENTERED",
+        requestBody: {
+          values: [["Barang", "Harga", "Jumlah"]],
+        },
+      });
+    }
+
+    // Masukkan data ke Sheet1
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: sheetId,
+      range: "Sheet1!A:C",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [[data.barang, data.harga, data.jumlah]],
+      },
+    });
+
+    return res.json({ message: "Data berhasil ditambahkan ke spreadsheet" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Gagal menambahkan data ke spreadsheet" });
+  }
+});
 
 module.exports = app;
 // jalankan server

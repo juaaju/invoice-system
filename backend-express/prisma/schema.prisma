@@ -3,43 +3,44 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl= env("DIRECT_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String?
-  email     String   @unique
-  image     String?
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  image         String?
   emailVerified DateTime?
-  accounts  Account[]
-  sessions  Session[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  spreadsheets SpreadsheetList[]
+  spreadsheets     SpreadsheetList[]
+  whatsAppAccounts WhatsAppAccount[]
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
-  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  refresh_token_expires_in Int? 
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
-
 
 model Session {
   id           String   @id @default(cuid())
@@ -53,16 +54,42 @@ model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
+
   @@unique([identifier, token])
 }
 
 model SpreadsheetList {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  name      String
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  name           String
   spreadsheetUrl String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+
+  connections SpreadsheetConnection[]
 }
 
+model WhatsAppAccount {
+  id          String   @id @default(uuid())
+  phoneNumber String   @unique
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  connections SpreadsheetConnection[]
+}
+
+model SpreadsheetConnection {
+  id          String          @id @default(uuid())
+  waAccountId String
+  waAccount   WhatsAppAccount @relation(fields: [waAccountId], references: [id])
+
+  spreadsheetId String
+  spreadsheet   SpreadsheetList @relation(fields: [spreadsheetId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([waAccountId], name: "OneConnectionPerWA") // satu nomor WA hanya boleh satu koneksi
+}
