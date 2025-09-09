@@ -14,6 +14,7 @@
     "@prisma/client": "^6.15.0",
     "@whiskeysockets/baileys": "^6.7.18",
     "cors": "^2.8.5",
+    "express": "^5.1.0",
     "googleapis": "^159.0.0",
     "qrcode-terminal": "^0.12.0",
     "tmp": "^0.2.5"
