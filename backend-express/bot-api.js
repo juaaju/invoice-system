@@ -74,40 +74,69 @@ async function startBot() {
     }
 
     // --- Proses gambar ---
-    const imageMsg = msg.message.imageMessage
+    // --- Bagian proses gambar ---
+    const imageMsg = msg.message.imageMessage;
     if (imageMsg) {
-      console.log(`📷 Gambar diterima dari ${fromNumber}`)
+      console.log(`📷 Gambar diterima dari ${fromNumber}`);
+      let tempFile;
       try {
-        const buffer = await downloadMediaMessage(msg, "buffer", {}, { logger: console })
-        const tempFile = tmp.fileSync({ postfix: '.jpg' })
-        await fsPromises.writeFile(tempFile.name, buffer)
-        console.log(`✅ Gambar disimpan sementara di ${tempFile.name}`)
+        // Download media
+        const buffer = await downloadMediaMessage(msg, "buffer", {}, { logger: console });
+        tempFile = tmp.fileSync({ postfix: ".jpg" });
+        await fsPromises.writeFile(tempFile.name, buffer);
+        console.log(`✅ Gambar disimpan sementara di ${tempFile.name}`);
 
-        // OCR
-        const ocrRes = await axios.post("http://localhost:5001/ocr", { imagePath: tempFile.name })
-        const extractedText = ocrRes.data.extractedText || "(OCR gagal)"
-        console.log("📄 Hasil OCR:", extractedText)
+        // Kirim ke Flask endpoint
+        const FormData = require("form-data");
+        const form = new FormData();
+        form.append("file", fs.createReadStream(tempFile.name));
 
-        // LLM
-        const llmRes = await axios.post("http://localhost:5001/llm", { text: extractedText })
-        const llmReply = llmRes.data.reply || extractedText
+        let flaskRes;
+        try {
+          flaskRes = await axios.post("http://localhost:8000/process_invoice", form, {
+            headers: form.getHeaders(),
+            timeout: 120000 // timeout 30 detik
+          });
+        } catch (flaskErr) {
+          console.error("❌ Error saat request ke Flask:", flaskErr.response?.data || flaskErr.message);
+          await sock.sendMessage(fullJid, { 
+            text: `⚠️ Gagal memproses invoice di Flask:\n${JSON.stringify(flaskErr.response?.data || flaskErr.message, null, 2)}` 
+          });
+          return; // hentikan proses selanjutnya
+        }
 
-        // --- Kirim ke API SPS ---
-        await axios.post(`http://localhost:5000/sheets/append/${userId}/${sheetId}`, {
-          data: llmReply
-        })
-        console.log("📡 Hasil dikirim ke API SPS")
+        const invoiceData = flaskRes.data.data;
+        console.log("📄 Hasil dari Flask:", invoiceData);
 
-        // Balas WA
-        await sock.sendMessage(fullJid, { text: `📄 Hasil OCR + LLM sudah dikirim ke spreadsheet kamu.` })
+        // Kirim ke SPS
+        try {
+          await axios.post(`http://localhost:5000/sheets/append/${userId}/${sheetId}`, { data: invoiceData });
+          console.log("📡 Hasil dikirim ke API SPS");
+
+          await sock.sendMessage(fullJid, { 
+            text: `✅ Data invoice berhasil diproses dan dikirim ke spreadsheet:\n${JSON.stringify(invoiceData, null, 2)}` 
+          });
+        } catch (spsErr) {
+          console.error("❌ Error saat kirim ke SPS:", spsErr.response?.data || spsErr.message);
+          await sock.sendMessage(fullJid, { 
+            text: `⚠️ Gagal mengirim data ke spreadsheet:\n${JSON.stringify(spsErr.response?.data || spsErr.message, null, 2)}` 
+          });
+        }
 
       } catch (err) {
-        console.error("❌ Error OCR/LLM/SPS:", err.message)
-        await sock.sendMessage(fullJid, { text: "⚠️ Gagal memproses gambar." })
+        console.error("❌ Error umum saat proses gambar:", err.stack || err.message);
+        await sock.sendMessage(fullJid, { 
+          text: `⚠️ Terjadi kesalahan saat memproses gambar:\n${err.stack || err.message}` 
+        });
       } finally {
-        console.log(`🗑️ File sementara ${imageMsg?.fileName || ''} akan dibersihkan otomatis`)
+        if (tempFile) {
+          tempFile.removeCallback();
+          console.log(`🗑️ File sementara dibersihkan`);
+        }
       }
     }
+
+
   })
 
 }
