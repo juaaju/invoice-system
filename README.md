@@ -36,6 +36,6 @@
 
 ---
 
-## 📊 System Flow
+## 📊 Landing Page View
 
 ![Landing Page View](./docs/invoiceflow.png)
