@@ -38,4 +38,4 @@
 
 ## 📊 System Flow
 
-![System Flow](./docs/invoiceflow.png)
+![Landing Page View](./docs/invoiceflow.png)
