@@ -176,62 +176,127 @@ app.delete("/sheets/:userId/:id", async (req, res) => {
   }
 });
 
+// app.post("/sheets/append/:userId/:id", async (req, res) => {
+//   try {
+//     const { userId, id } = req.params;
+//     const { data } = req.body; 
+//     // data = { barang: "Beras", harga: 50000, jumlah: 2 }
+
+//     if (!data || !data.barang || !data.harga || !data.jumlah) {
+//       return res.status(400).json({ error: "Data tidak lengkap" });
+//     }
+
+//     // Ambil spreadsheet dari DB
+//     const spreadsheet = await prisma.spreadsheetList.findUnique({
+//       where: { id: String(id) },
+//     });
+
+//     if (!spreadsheet) return res.status(404).json({ error: "Spreadsheet tidak ditemukan" });
+
+//     // Ambil ID Google Sheets dari URL
+//     const match = spreadsheet.spreadsheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+//     if (!match) return res.status(400).json({ error: "Spreadsheet ID Google tidak valid" });
+
+//     const sheetId = match[1];
+
+//     // Auth Google client
+//     const client = await getGoogleClient(userId);
+//     const sheets = google.sheets({ version: "v4", auth: client });
+
+//     // Cek apakah header sudah ada di Sheet1!A1:C1
+//     const result = await sheets.spreadsheets.values.get({
+//       spreadsheetId: sheetId,
+//       range: "Sheet1!A1:C1",
+//     });
+
+//     if (!result.data.values || result.data.values.length === 0) {
+//       // tulis header jika kosong
+//       await sheets.spreadsheets.values.update({
+//         spreadsheetId: sheetId,
+//         range: "Sheet1!A1:C1",
+//         valueInputOption: "USER_ENTERED",
+//         requestBody: {
+//           values: [["Barang", "Harga", "Jumlah"]],
+//         },
+//       });
+//     }
+
+//     // Masukkan data ke Sheet1
+//     await sheets.spreadsheets.values.append({
+//       spreadsheetId: sheetId,
+//       range: "Sheet1!A:C",
+//       valueInputOption: "USER_ENTERED",
+//       requestBody: {
+//         values: [[data.barang, data.harga, data.jumlah]],
+//       },
+//     });
+
+//     return res.json({ message: "Data berhasil ditambahkan ke spreadsheet" });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ error: "Gagal menambahkan data ke spreadsheet" });
+//   }
+// });
+
 app.post("/sheets/append/:userId/:id", async (req, res) => {
   try {
     const { userId, id } = req.params;
-    const { data } = req.body; 
-    // data = { barang: "Beras", harga: 50000, jumlah: 2 }
+    const invoice = req.body.data; // JSON dari Flask
 
-    if (!data || !data.barang || !data.harga || !data.jumlah) {
-      return res.status(400).json({ error: "Data tidak lengkap" });
+    if (!invoice || !invoice.items || invoice.items.length === 0) {
+      return res.status(400).json({ error: "Invoice tidak valid" });
     }
 
     // Ambil spreadsheet dari DB
     const spreadsheet = await prisma.spreadsheetList.findUnique({
       where: { id: String(id) },
     });
-
     if (!spreadsheet) return res.status(404).json({ error: "Spreadsheet tidak ditemukan" });
 
-    // Ambil ID Google Sheets dari URL
     const match = spreadsheet.spreadsheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
     if (!match) return res.status(400).json({ error: "Spreadsheet ID Google tidak valid" });
 
     const sheetId = match[1];
-
-    // Auth Google client
     const client = await getGoogleClient(userId);
     const sheets = google.sheets({ version: "v4", auth: client });
 
-    // Cek apakah header sudah ada di Sheet1!A1:C1
-    const result = await sheets.spreadsheets.values.get({
+    // Pastikan ada header sesuai JSON
+    const headerRange = "Sheet1!A1:G1";
+    const headerResult = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: "Sheet1!A1:C1",
+      range: headerRange,
     });
 
-    if (!result.data.values || result.data.values.length === 0) {
-      // tulis header jika kosong
+    if (!headerResult.data.values || headerResult.data.values.length === 0) {
       await sheets.spreadsheets.values.update({
         spreadsheetId: sheetId,
-        range: "Sheet1!A1:C1",
+        range: headerRange,
         valueInputOption: "USER_ENTERED",
         requestBody: {
-          values: [["Barang", "Harga", "Jumlah"]],
+          values: [["Invoice Number", "Date", "Vendor", "Total", "Item", "Price", "Qty"]],
         },
       });
     }
 
-    // Masukkan data ke Sheet1
+    // Flatten items → setiap item jadi 1 baris dengan metadata invoice
+    const values = invoice.items.map(item => [
+      invoice.invoice_number,
+      invoice.date,
+      invoice.vendor,
+      invoice.total,
+      item.name,
+      item.price,
+      item.qty || 1
+    ]);
+
     await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
-      range: "Sheet1!A:C",
+      range: "Sheet1!A:G",
       valueInputOption: "USER_ENTERED",
-      requestBody: {
-        values: [[data.barang, data.harga, data.jumlah]],
-      },
+      requestBody: { values },
     });
 
-    return res.json({ message: "Data berhasil ditambahkan ke spreadsheet" });
+    return res.json({ message: "Invoice berhasil ditambahkan ke spreadsheet" });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Gagal menambahkan data ke spreadsheet" });
