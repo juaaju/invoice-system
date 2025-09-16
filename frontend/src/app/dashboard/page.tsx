@@ -31,7 +31,7 @@ export default function DashboardPage() {
 
   const [loading, setLoading] = useState(false);
   const [sheetName, setSheetName] = useState("");
-  const [result, setResult] = useState<{ url: string; spreadsheetId: string } | null>(null);
+  const [result, setResult] = useState<{ url?: string; spreadsheetId?: string; error?: string } | null>(null);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -136,12 +136,12 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       // pakai relative path, otomatis diproxy ke :5000
-      const res = await fetch(`/api/sheets/create/${userId}`, {
+      const res = await fetch(`http://localhost:5000/sheets/create/${userId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: nameSheet }),
-        credentials: "include",   // 🔑 penting biar nggak CORS error
       });
+
 
       if (!res.ok) {
         const text = await res.text();
@@ -161,11 +161,11 @@ export default function DashboardPage() {
       // fetchSheets();
     
     } catch (err: any) {
-      console.error("Fetch error object:", err);
-      if (err instanceof Error) {
-        console.error("Error message:", err.message);
-      }
-      alert(err.message || "Terjadi error");
+      console.error("❌ Error di frontend:", err);
+
+      // tampilkan error di console atau UI, jangan popup
+      // alert(err.message || "Terjadi error"); ❌ ini yang bikin popup
+      setResult({ error: err.message || "Terjadi error" });
     } finally {
       setLoading(false);
     }
@@ -204,24 +204,24 @@ export default function DashboardPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold text-gray-900">InvoiceFlow</h1>
-              <span className="text-gray-400">|</span>
-              <span className="text-gray-600">Dashboard</span>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">InvoiceFlow</h1>
+              <span className="text-gray-400 hidden sm:inline">|</span>
+              <span className="text-gray-600 hidden sm:inline">Dashboard</span>
             </div>
-            <div className="flex items-center gap-4">
-              <button onClick={() => setShowModal(true)} className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <button onClick={() => setShowModal(true)} className="bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 sm:gap-2">
                 <span>📱</span>
-                Konek WA
+                <span className="hidden sm:inline">Konek WA</span>
               </button>
               <button
                 onClick={() => router.push("https://www.youtube.com/watch?v=PAOy-bCk8EU")}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 sm:gap-2"
               >
                 <span>❓</span>
-                Cara Pakai
+                <span className="hidden sm:inline">Cara Pakai</span>
               </button>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 hidden md:block">
                 Halo, <span className="font-semibold">{user?.name}</span>
               </div>
               <button
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                     signOut({ callbackUrl: "/login" })
                   }
                 }}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 px-2 py-1 rounded text-sm font-medium"
               >
                 Logout
               </button>
@@ -289,7 +289,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <h3 className="font-semibold text-gray-900">{sheet.name}</h3>
-                          <p className="text-sm text-gray-600">Dibuat: {sheet.createdAt}</p>
+                          <p className="text-sm text-gray-600">Dibuat: {new Date(sheet.createdAt).toLocaleDateString('id-ID')}</p>
                         </div>
                       </div>
                       

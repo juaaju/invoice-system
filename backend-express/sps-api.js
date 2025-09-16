@@ -5,10 +5,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
-app.use(cors({
-  origin: "http://localhost:3000",  // asal Next.js
-  credentials: true
-}));
+app.use(cors({ origin: "*"}));
 
 app.use(express.json());
 
@@ -51,10 +48,15 @@ async function getGoogleClient(userId) {
 
 app.post("/sheets/create/:userId", async (req, res) => {
   try {
+    console.log("📩 Request diterima di /sheets/create:", req.params.userId);
+
     const client = await getGoogleClient(req.params.userId);
+    console.log("✅ Client Google siap");
+
     const sheets = google.sheets({ version: "v4", auth: client });
 
     const sheetName = req.body.name || "Spreadsheet Baru Dari API";
+    console.log("📄 Nama sheet:", sheetName);
 
     const response = await sheets.spreadsheets.create({
       requestBody: {
@@ -62,6 +64,7 @@ app.post("/sheets/create/:userId", async (req, res) => {
         sheets: [{ properties: { title: "Sheet1" } }],
       },
     });
+    console.log("📊 Google API sukses");
 
     const spreadsheetId = response.data.spreadsheetId;
 
@@ -72,15 +75,17 @@ app.post("/sheets/create/:userId", async (req, res) => {
         spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,
       },
     });
+    console.log("💾 Data masuk database");
 
+    console.log("➡️ Returning response:", spreadsheetId);
     res.json({
       message: "Spreadsheet baru berhasil dibuat!",
       spreadsheetId,
       url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Gagal bikin spreadsheet baru");
+    console.error("❌ Error di backend:", err);
+    res.status(500).json({ error: "Gagal bikin spreadsheet baru" });
   }
 });
 
@@ -175,68 +180,6 @@ app.delete("/sheets/:userId/:id", async (req, res) => {
     res.status(500).json({ error: "Gagal hapus spreadsheet" });
   }
 });
-
-// app.post("/sheets/append/:userId/:id", async (req, res) => {
-//   try {
-//     const { userId, id } = req.params;
-//     const { data } = req.body; 
-//     // data = { barang: "Beras", harga: 50000, jumlah: 2 }
-
-//     if (!data || !data.barang || !data.harga || !data.jumlah) {
-//       return res.status(400).json({ error: "Data tidak lengkap" });
-//     }
-
-//     // Ambil spreadsheet dari DB
-//     const spreadsheet = await prisma.spreadsheetList.findUnique({
-//       where: { id: String(id) },
-//     });
-
-//     if (!spreadsheet) return res.status(404).json({ error: "Spreadsheet tidak ditemukan" });
-
-//     // Ambil ID Google Sheets dari URL
-//     const match = spreadsheet.spreadsheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
-//     if (!match) return res.status(400).json({ error: "Spreadsheet ID Google tidak valid" });
-
-//     const sheetId = match[1];
-
-//     // Auth Google client
-//     const client = await getGoogleClient(userId);
-//     const sheets = google.sheets({ version: "v4", auth: client });
-
-//     // Cek apakah header sudah ada di Sheet1!A1:C1
-//     const result = await sheets.spreadsheets.values.get({
-//       spreadsheetId: sheetId,
-//       range: "Sheet1!A1:C1",
-//     });
-
-//     if (!result.data.values || result.data.values.length === 0) {
-//       // tulis header jika kosong
-//       await sheets.spreadsheets.values.update({
-//         spreadsheetId: sheetId,
-//         range: "Sheet1!A1:C1",
-//         valueInputOption: "USER_ENTERED",
-//         requestBody: {
-//           values: [["Barang", "Harga", "Jumlah"]],
-//         },
-//       });
-//     }
-
-//     // Masukkan data ke Sheet1
-//     await sheets.spreadsheets.values.append({
-//       spreadsheetId: sheetId,
-//       range: "Sheet1!A:C",
-//       valueInputOption: "USER_ENTERED",
-//       requestBody: {
-//         values: [[data.barang, data.harga, data.jumlah]],
-//       },
-//     });
-
-//     return res.json({ message: "Data berhasil ditambahkan ke spreadsheet" });
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ error: "Gagal menambahkan data ke spreadsheet" });
-//   }
-// });
 
 app.post("/sheets/append/:userId/:id", async (req, res) => {
   try {
