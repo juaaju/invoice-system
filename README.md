@@ -45,4 +45,8 @@
 
 ## 📊 Landing Page View
 
-![Landing Page View](./docs/image.png)
+![Landing Page View](./docs/image1.png)
+
+## Dashboard View
+
+![Dashboard View](./docs/image.png)
