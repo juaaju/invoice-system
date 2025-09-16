@@ -1,7 +1,3 @@
-Here’s your document rewritten fully in **English**:
-
----
-
 # 📄 Auto Invoice
 
 ## 🚀 Core Solution
@@ -50,7 +46,3 @@ Here’s your document rewritten fully in **English**:
 ## 📊 Landing Page View
 
 ![Landing Page View](./docs/image.png)
-
----
-
-Mau saya bikinkan juga versi **lebih ringkas & marketing style** biar cocok langsung dipakai di landing page?
