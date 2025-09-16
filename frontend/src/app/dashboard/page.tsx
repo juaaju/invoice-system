@@ -215,7 +215,7 @@ export default function DashboardPage() {
                 <span className="hidden sm:inline">Konek WA</span>
               </button>
               <button
-                onClick={() => router.push("https://www.youtube.com/watch?v=PAOy-bCk8EU")}
+                onClick={() => router.push("https://drive.google.com/file/d/16sTeLlfwBgGRJpyKfBI8B9pnuveO8d5N/view?usp=sharing")}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 sm:gap-2"
               >
                 <span>❓</span>
