@@ -110,7 +110,8 @@ async function startBot() {
 
         // Kirim ke SPS
         try {
-          await axios.post(`http://localhost:5000/sheets/append/${userId}/${sheetId}`, { data: invoiceData });
+          await axios.post(`http://localhost:5000/sheets/append/${userId}/${sheetId}`, {data: invoiceData});
+
           console.log("📡 Hasil dikirim ke API SPS");
 
           await sock.sendMessage(fullJid, { 
