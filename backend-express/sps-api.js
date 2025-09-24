@@ -146,41 +146,55 @@ app.delete("/sheets/:userId/:id", async (req, res) => {
   try {
     const { userId, id } = req.params;
 
-    // cari data spreadsheet di DB
+    // 1. Cek spreadsheet di DB
     const spreadsheet = await prisma.spreadsheetList.findUnique({
-      where: { id: String(id) }, // ✅ jangan parseInt
+      where: { id: String(id) },
     });
-
     if (!spreadsheet) {
       return res.status(404).json({ error: "Spreadsheet tidak ditemukan" });
     }
 
-    // Ambil spreadsheetId dari URL
+    // 2. Ambil ID Google dari URL
     const match = spreadsheet.spreadsheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
     if (!match) {
       return res.status(400).json({ error: "Spreadsheet ID tidak valid" });
     }
     const spreadsheetId = match[1];
 
-    // Auth Google client
+    // 3. Auth Google client
     const client = await getGoogleClient(userId);
     const drive = google.drive({ version: "v3", auth: client });
 
-    // Hapus dari Google Drive
-    await drive.files.delete({ fileId: spreadsheetId });
+    // 4. Hapus di Google Drive (handle kalau 404)
+    try {
+      await drive.files.delete({ fileId: spreadsheetId });
+    } catch (err) {
+      if (err.code === 404) {
+        console.warn(`⚠️ File ${spreadsheetId} not found in Google Drive, skipping delete...`);
+      } else {
+        throw err;
+      }
+    }
 
-    // Hapus record dari DB
-    await prisma.spreadsheetList.delete({
-      where: { id: String(id) }, // ✅ jangan parseInt
+    // 5. Hapus semua koneksi terkait dulu
+    await prisma.spreadsheetConnection.deleteMany({
+      where: { spreadsheetId: String(id) },
     });
 
-    res.json({ message: "Spreadsheet berhasil dihapus dari Google Drive dan DB" });
+    // 6. Baru hapus SpreadsheetList
+    await prisma.spreadsheetList.delete({
+      where: { id: String(id) },
+    });
+
+
+    res.json({ message: "Spreadsheet berhasil dihapus dari DB (Drive skip jika tidak ditemukan)" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Gagal hapus spreadsheet" });
+    console.error("DELETE ERROR:", err.response?.data || err.message);
+    res.status(500).json({ error: "Gagal hapus spreadsheet", detail: err.message });
   }
 });
 
+// Terima data invoice dari bot-api.js
 app.post("/sheets/append/:userId/:id", async (req, res) => {
   try {
     const { userId, id } = req.params;
@@ -204,7 +218,7 @@ app.post("/sheets/append/:userId/:id", async (req, res) => {
     const sheets = google.sheets({ version: "v4", auth: client });
 
     // Pastikan ada header sesuai JSON
-    const headerRange = "Sheet1!A1:G1";
+    const headerRange = "Sheet1!A1:H1";
     const headerResult = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
       range: headerRange,
@@ -216,7 +230,7 @@ app.post("/sheets/append/:userId/:id", async (req, res) => {
         range: headerRange,
         valueInputOption: "USER_ENTERED",
         requestBody: {
-          values: [["Invoice Number", "Date", "Vendor", "Total", "Item", "Price", "Qty"]],
+          values: [["Invoice Number", "Date", "Vendor", "Total Price", "Item", "Price", "Qty", "Total Amount"]],
         },
       });
     }
@@ -224,17 +238,19 @@ app.post("/sheets/append/:userId/:id", async (req, res) => {
     // Flatten items → setiap item jadi 1 baris dengan metadata invoice
     const values = invoice.items.map(item => [
       invoice.invoice_number,
-      invoice.date,
-      invoice.vendor,
-      invoice.total,
+      invoice.invoice_date,
+      invoice.company_name,
+      item.total_price,
       item.name,
-      item.price,
-      item.qty || 1
+      item.unit_price,
+      item.quantity || 1,
+      invoice.total_amount,
     ]);
+
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
-      range: "Sheet1!A:G",
+      range: "Sheet1!A:H",
       valueInputOption: "USER_ENTERED",
       requestBody: { values },
     });
