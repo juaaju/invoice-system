@@ -45,7 +45,8 @@ async function startBot() {
 
     // ✅ mapping nomor WA ke userId
     const waAccount = await prisma.whatsAppAccount.findUnique({
-      where: { phoneNumber: fromNumber }
+      where: { phoneNumber: fromNumber },
+      include: { user: true }
     });
     if (!waAccount || !waAccount.userId) {
       await sock.sendMessage(fullJid, { text: "⚠️ Nomor kamu belum terhubung ke akun user." });
@@ -80,54 +81,96 @@ async function startBot() {
       console.log(`📷 Gambar diterima dari ${fromNumber}`);
       let tempFile;
       try {
-        // Download media
+        // 🔹 1. Reset kredit harian jika perlu
+        const today = new Date().toISOString().split("T")[0];
+        if (!waAccount.user.lastCreditReset || waAccount.user.lastCreditReset.toISOString().split("T")[0] !== today) {
+          await prisma.user.update({
+            where: { id: waAccount.userId },
+            data: {
+              credits: 3,
+              lastCreditReset: new Date(),
+            },
+          });
+          console.log("🔁 Kredit harian direset ke 3");
+        }
+
+        // 🔹 2. Kurangi kredit secara aman
+        let updatedUser = waAccount.user;
+        if (waAccount.user.userType === "free") {
+          updatedUser = await prisma.user.update({
+            where: { id: waAccount.userId },
+            data: {
+              credits: { decrement: 1 },
+            },
+            select: { credits: true }, // ambil sisa kredit terbaru
+          });
+
+          if (updatedUser.credits < 0) {
+            await prisma.user.update({
+              where: { id: waAccount.userId },
+              data: { credits: 0 },
+            });
+            await sock.sendMessage(fullJid, {
+              text: "⚠️ Kredit harian kamu sudah habis. Silakan tunggu besok atau upgrade ke Pro 🚀",
+            });
+            return;
+          }
+        }
+
+        // 🔹 3. Download media
         const buffer = await downloadMediaMessage(msg, "buffer", {}, { logger: console });
         tempFile = tmp.fileSync({ postfix: ".jpg" });
         await fsPromises.writeFile(tempFile.name, buffer);
         console.log(`✅ Gambar disimpan sementara di ${tempFile.name}`);
 
-        // Kirim ke Flask endpoint
+        // 🔹 4. Kirim ke Flask endpoint
         const FormData = require("form-data");
         const form = new FormData();
         form.append("file", fs.createReadStream(tempFile.name));
+        form.append("user_type", waAccount.user.userType);
 
         let flaskRes;
         try {
           flaskRes = await axios.post("http://localhost:8000/process_invoice", form, {
             headers: form.getHeaders(),
-            timeout: 120000 // timeout 30 detik
+            timeout: 120000,
           });
         } catch (flaskErr) {
           console.error("❌ Error saat request ke Flask:", flaskErr.response?.data || flaskErr.message);
-          await sock.sendMessage(fullJid, { 
-            text: `⚠️ Gagal memproses invoice di Flask:\n${JSON.stringify(flaskErr.response?.data || flaskErr.message, null, 2)}` 
+          await sock.sendMessage(fullJid, {
+            text: `⚠️ Gagal memproses invoice di Flask:\n${JSON.stringify(flaskErr.response?.data || flaskErr.message, null, 2)}`,
           });
-          return; // hentikan proses selanjutnya
+          return;
         }
 
         const invoiceData = flaskRes.data.data;
         console.log("📄 Hasil dari Flask:", invoiceData);
 
-        // Kirim ke SPS
+        // 🔹 5. Kirim ke SPS
         try {
-          await axios.post(`http://localhost:5000/sheets/append/${userId}/${sheetId}`, {data: invoiceData});
-
+          await axios.post(`http://localhost:5000/sheets/append/${userId}/${sheetId}`, { data: invoiceData });
           console.log("📡 Hasil dikirim ke API SPS");
-
-          await sock.sendMessage(fullJid, { 
-            text: `✅ Data invoice berhasil diproses dan dikirim ke spreadsheet:\n${JSON.stringify(invoiceData, null, 2)}` 
-          });
         } catch (spsErr) {
           console.error("❌ Error saat kirim ke SPS:", spsErr.response?.data || spsErr.message);
-          await sock.sendMessage(fullJid, { 
-            text: `⚠️ Gagal mengirim data ke spreadsheet:\n${JSON.stringify(spsErr.response?.data || spsErr.message, null, 2)}` 
+          await sock.sendMessage(fullJid, {
+            text: `⚠️ Gagal mengirim data ke spreadsheet:\n${JSON.stringify(spsErr.response?.data || spsErr.message, null, 2)}`,
           });
         }
 
+        // 🔹 6. Kirim info kredit ke user
+        if (waAccount.user.userType === "free") {
+          await sock.sendMessage(fullJid, {
+            text: `✅ Invoice berhasil diproses. Kredit tersisa: ${updatedUser.credits}/3`,
+          });
+        } else {
+          await sock.sendMessage(fullJid, {
+            text: `✅ Invoice berhasil diproses (akun Pro, tanpa batasan kredit).`,
+          });
+        }
       } catch (err) {
         console.error("❌ Error umum saat proses gambar:", err.stack || err.message);
-        await sock.sendMessage(fullJid, { 
-          text: `⚠️ Terjadi kesalahan saat memproses gambar:\n${err.stack || err.message}` 
+        await sock.sendMessage(fullJid, {
+          text: `⚠️ Terjadi kesalahan saat memproses gambar:\n${err.stack || err.message}`,
         });
       } finally {
         if (tempFile) {

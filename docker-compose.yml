@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  bot:
+    build:
+      context: ./backend-express
+      dockerfile: Dockerfile.bot
+    container_name: backend-bot
+    ports:
+      - "5001:5000"
+
+  sps:
+    build:
+      context: ./backend-express
+      dockerfile: Dockerfile.sps
+    container_name: backend-sps
+    ports:
+      - "5002:5000"
+
+  backend-python:
+    build: ./backend-python
+    container_name: backend-python
+    ports:
+      - "8000:8000"
+
+  frontend-nextjs:
+    build: ./frontend
+    container_name: frontend-nextjs
+    ports:
+      - "3000:3000"

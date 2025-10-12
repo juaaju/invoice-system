@@ -76,19 +76,19 @@ export default function LandingPage() {
                   <span className="text-gray-600 text-lg">3 invoice per hari</span>
                 </li>
                 <li className="flex items-center gap-4">
-                  <span className="text-green-500 font-bold text-xl">✓</span>
-                  <span className="text-gray-600 text-lg">Kirim via WhatsApp</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <span className="text-green-500 font-bold text-xl">✓</span>
-                  <span className="text-gray-600 text-lg">Auto ke Spreadsheet</span>
+                  <span className="text-gray-400 font-bold text-xl">✕</span>
+                  <span className="text-gray-400 text-lg">Fitur handwriting invoice</span>
                 </li>
                 <li className="flex items-center gap-4">
                   <span className="text-gray-400 font-bold text-xl">✕</span>
-                  <span className="text-gray-400 text-lg">Template kustom</span>
+                  <span className="text-gray-400 text-lg">Template spreadsheet kustom</span>
+                </li>
+                <li className="flex items-center gap-4">
+                  <span className="text-gray-400 font-bold text-xl">✕</span>
+                  <span className="text-gray-400 text-lg">Multi WA</span>
                 </li>
               </ul>
-              <Link href="/register" className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-8 py-4 rounded-full font-semibold text-lg text-center block transition-all duration-200 hover:shadow-md">
+              <Link href="/login" className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-8 py-4 rounded-full font-semibold text-lg text-center block transition-all duration-200 hover:shadow-md">
                 Mulai Gratis
               </Link>
             </div>
@@ -96,14 +96,14 @@ export default function LandingPage() {
             {/* Pro Plan */}
             <div className="bg-white p-8 rounded-2xl shadow-2xl border-2 border-blue-200 relative transform scale-105 hover:scale-110 transition-all duration-300">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">Paling Populer</span>
+                <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">Akses tanpa batas</span>
               </div>
               <div className="bg-gradient-to-br from-blue-100 to-blue-200 w-16 h-16 rounded-2xl flex items-center justify-center mb-8">
                 <span className="text-3xl">⭐</span>
               </div>
               <h3 className="text-3xl font-bold text-gray-900 mb-4">Pro</h3>
               <div className="text-4xl font-bold text-gray-900 mb-8">
-                Rp 30.000<span className="text-xl font-normal text-gray-600">/bulan</span>
+                Rp 50.000<span className="text-xl font-normal text-gray-600">/bulan</span>
               </div>
               <ul className="space-y-4 mb-10">
                 <li className="flex items-center gap-4">
@@ -112,18 +112,18 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-center gap-4">
                   <span className="text-green-500 font-bold text-xl">✓</span>
-                  <span className="text-gray-600 text-lg">Semua fitur Free</span>
+                  <span className="text-gray-600 text-lg">Fitur handwriting invoice</span>
                 </li>
                 <li className="flex items-center gap-4">
                   <span className="text-green-500 font-bold text-xl">✓</span>
-                  <span className="text-gray-600 text-lg">Template kustom</span>
+                  <span className="text-gray-600 text-lg">Template spreadsheet kustom</span>
                 </li>
                 <li className="flex items-center gap-4">
                   <span className="text-green-500 font-bold text-xl">✓</span>
-                  <span className="text-gray-600 text-lg">Priority support</span>
+                  <span className="text-gray-600 text-lg">Multi WA</span>
                 </li>
               </ul>
-              <Link href="/register?plan=pro" className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-full font-semibold text-lg text-center block transition-all duration-200 shadow-lg hover:shadow-xl">
+              <Link href="/maintenance" className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-full font-semibold text-lg text-center block transition-all duration-200 shadow-lg hover:shadow-xl">
                 Pilih Pro
               </Link>
             </div>
@@ -155,7 +155,7 @@ export default function LandingPage() {
                   <span className="text-gray-600 text-lg">Developer support</span>
                 </li>
               </ul>
-              <Link href="/api-docs" className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-4 rounded-full font-semibold text-lg text-center block transition-all duration-200 shadow-lg hover:shadow-xl">
+              <Link href="/maintenance" className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-4 rounded-full font-semibold text-lg text-center block transition-all duration-200 shadow-lg hover:shadow-xl">
                 Beli API
               </Link>
             </div>
@@ -172,7 +172,7 @@ export default function LandingPage() {
               Mulai Kelola Invoice Anda
             </h2>
             <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto">
-              Bergabung dengan ribuan pengguna yang sudah memakai InvoiceFlow
+              Kirim invoice ke WhatsApp, data langsung tercatat di Spreadsheet. Praktis tanpa ribet, pas untuk mahasiswa maupun bisnis kecil
             </p>
             <Link 
               href="/login" 

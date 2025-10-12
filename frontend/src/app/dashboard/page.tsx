@@ -16,6 +16,7 @@ interface Spreadsheet {
 
 interface User {
   name: string;
+  userType: string;
 }
 
 export default function DashboardPage() {
@@ -223,6 +224,11 @@ export default function DashboardPage() {
               </button>
               <div className="text-sm text-gray-600 hidden md:block">
                 Halo, <span className="font-semibold">{user?.name}</span>
+              </div>
+              <div className="hidden md:block">
+                <span className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-800 bg-indigo-100 rounded-md">
+                  {user?.userType}
+                </span>
               </div>
               <button
                 onClick={() => {

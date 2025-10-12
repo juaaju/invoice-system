@@ -21,6 +21,10 @@ model User {
 
   spreadsheets     SpreadsheetList[]
   whatsAppAccounts WhatsAppAccount[]
+  
+  credits         Int      @default(3)
+  lastCreditReset DateTime @default(now())
+  userType      String   @default("free") // bisa "free" atau "pro"
 }
 
 model Account {

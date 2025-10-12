@@ -137,7 +137,7 @@ class IntelligentInvoiceProcessor:
 
     
     def process_invoice(self, image_path):
-        """Main processing function"""
+        """Main processing function (structured OCR + LLM)"""
         try:
             # Step 1: Extract text with positions
             print("Step 1: Extracting text with positions...")
@@ -154,32 +154,36 @@ class IntelligentInvoiceProcessor:
             # Step 4: Process with LLaMA
             print("Step 4: Processing with LLaMA...")
             response = self.llm.invoke(prompt_text)
-            
-            # Step 5: Parse JSON response
+
+            # Step 5: Clean + Parse JSON response
+            if isinstance(response, dict):
+                # Kalau sudah berupa dict, langsung return
+                return response
+
+            if hasattr(response, "content"):
+                response_text = response.content.strip()
+            else:
+                response_text = str(response).strip()
+
+            # Bersihkan kalau ada blok kode Markdown
+            if response_text.startswith("```"):
+                response_text = "\n".join(response_text.split("\n")[1:-1])
+
             try:
-                # Clean the response by removing Markdown code block markers
-                cleaned_response = response.content.strip()
-                if cleaned_response.startswith("```"):
-                    # Remove the first line and last line containing ```
-                    cleaned_response = "\n".join(cleaned_response.split("\n")[1:-1])
-                
-                result_json = json.loads(cleaned_response)
-                return {
-                    "status": "success",
-                    "data": result_json,
-                }
-            except json.JSONDecodeError as e:
-                return {
-                    "status": "error",
-                    "error": f"Failed to parse JSON: {str(e)}",
-                    "raw_response": response.content
-                }
-                
+                parsed = json.loads(response_text)
+            except json.JSONDecodeError:
+                print("⚠️ Hasil LLM bukan JSON valid, dikembalikan mentah.")
+                parsed = {"raw_text": response_text}
+
+            return parsed
+
         except Exception as e:
+            print(f"❌ Error di process_invoice: {e}")
             return {
                 "status": "error",
                 "error": str(e)
             }
+
 
 # Usage example
 def main():
