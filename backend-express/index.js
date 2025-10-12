@@ -1,2 +1,2 @@
-require("./bot.js");
-require("./sps.js");
+require("./bot-api.js");
+require("./sps-api.js");
