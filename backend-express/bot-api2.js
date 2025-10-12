@@ -151,7 +151,7 @@ app.get('/qr-status', (req, res) => {
   res.json({ status: 'ready', qr: currentQR })
 })
 
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 8080
 app.listen(PORT, () => {
   console.log(`🌐 QR Viewer buka di: http://localhost:${PORT}`)
 })
