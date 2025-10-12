@@ -277,32 +277,32 @@ export default function DashboardPage() {
           </div>
 
           {/* Spreadsheet List */}
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {spreadsheets.length === 0 ? (
               <div className="text-center py-12">
                 <span className="text-6xl mb-4 block">📄</span>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada spreadsheet</h3>
-                <p className="text-gray-600">Buat spreadsheet pertama Anda untuk mulai mengelola invoice</p>
+                <p className="text-gray-600 px-4">Buat spreadsheet pertama Anda untuk mulai mengelola invoice</p>
               </div>
             ) : (
               <div className="grid gap-4">
                 {spreadsheets.map((sheet) => (
                   <div key={sheet.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="bg-green-100 p-2 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="bg-green-100 p-2 rounded-lg flex-shrink-0">
                           <span className="text-xl">📊</span>
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{sheet.name}</h3>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-gray-900 truncate">{sheet.name}</h3>
                           <p className="text-sm text-gray-600">Dibuat: {new Date(sheet.createdAt).toLocaleDateString('id-ID')}</p>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 sm:flex-shrink-0">
                         <button
                           onClick={() => openSpreadsheet(sheet.spreadsheetUrl)}
-                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-1 sm:flex-initial"
                         >
                           Buka
                         </button>
