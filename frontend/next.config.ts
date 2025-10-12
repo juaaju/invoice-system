@@ -5,7 +5,7 @@ import type { NextConfig } from "next";
       return [
         {
           source: "/api/sheets/:path*",
-          destination: "http://localhost:5000/sheets/:path*",
+          destination: "https://invoice-system-copy-production.up.railway.app/sheets/:path*",
         },
       ];
     },

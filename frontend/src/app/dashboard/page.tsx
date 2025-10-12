@@ -64,7 +64,7 @@ export default function DashboardPage() {
     if (!editingSheet) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/sheets/update/${userId}/${editingSheet.id}`, {
+      const res = await fetch(`https://invoice-system-copy-production.up.railway.app/sheets/update/${userId}/${editingSheet.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -94,7 +94,7 @@ export default function DashboardPage() {
     if (!confirm("Yakin ingin menghapus spreadsheet ini?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/sheets/${userId}/${id}`, {
+      const res = await fetch(`https://invoice-system-copy-production.up.railway.app/sheets/${userId}/${id}`, {
         method: "DELETE",
       });
 
@@ -137,7 +137,7 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       // pakai relative path, otomatis diproxy ke :5000
-      const res = await fetch(`http://localhost:5000/sheets/create/${userId}`, {
+      const res = await fetch(`https://invoice-system-copy-production.up.railway.app/sheets/create/${userId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: nameSheet }),
