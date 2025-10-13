@@ -37,7 +37,7 @@ export default function LandingPage() {
                 Coba Gratis
               </Link>
               <Link 
-                href="https://drive.google.com/file/d/16sTeLlfwBgGRJpyKfBI8B9pnuveO8d5N/view?usp=sharing" 
+                href="https://youtu.be/VPMofERQYvI" 
                 className="border-2 border-gray-300 hover:border-blue-500 text-gray-700 hover:text-blue-600 px-8 sm:px-10 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-200 bg-white hover:bg-blue-50"
               >
                 Lihat Demo

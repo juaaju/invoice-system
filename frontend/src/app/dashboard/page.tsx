@@ -216,7 +216,7 @@ export default function DashboardPage() {
                 <span className="hidden sm:inline">Konek WA</span>
               </button>
               <button
-                onClick={() => router.push("https://drive.google.com/file/d/16sTeLlfwBgGRJpyKfBI8B9pnuveO8d5N/view?usp=sharing")}
+                onClick={() => router.push("https://youtu.be/VPMofERQYvI")}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 sm:gap-2"
               >
                 <span>❓</span>
@@ -325,6 +325,14 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+        </div>
+        <div>
+            <button
+                onClick={() => router.push("https://forms.gle/chTtX6FPzcJxLG2R8")}
+                className="mt-2 bg-gray-100 hover:bg-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 sm:gap-2"
+              >
+                <span className="hidden sm:inline">FeedBack</span>
+            </button>
         </div>
       </div>
 
