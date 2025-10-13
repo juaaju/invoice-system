@@ -273,8 +273,8 @@ async function startBot() {
         form.append("user_type", waAccount.user.userType)
 
         // Ganti hardcode ke environment variable
-        const flaskURL = process.env.FLASK_URL || "http://localhost:8000"
-        const spsURL = process.env.SPS_URL || "http://localhost:5000"
+        const flaskURL =  "http://localhost:8000"
+        const spsURL =  "http://localhost:5000"
 
         let flaskRes
         try {

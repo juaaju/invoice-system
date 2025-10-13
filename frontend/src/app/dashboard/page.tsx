@@ -380,7 +380,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded-2xl shadow-lg p-6 w-96">
             <h2 className="text-lg font-semibold mb-4">Koneksi WhatsApp</h2>
             <p className="text-sm text-gray-600 mb-6">
-              Masukan no WA kamu dan pilih Spreadsheet untuk koneksi. Kemudian chat ke nomor bot 08xxxxxxx
+              Masukan no WA kamu dan pilih Spreadsheet untuk koneksi. Kemudian kirim invoice ke nomor bot 085119544917. Invoice akan terkirim otomatis ke spreadsheet.
             </p>
 
             {/* Input Nomor WA */}

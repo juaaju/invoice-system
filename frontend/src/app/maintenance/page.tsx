@@ -19,13 +19,12 @@ export default function MaintenancePage() {
 
           {/* Title */}
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-            Sedang dalam Perbaikan
+            Sedang dalam Pengembangan
           </h1>
 
           {/* Description */}
           <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-            Kami sedang melakukan maintenance untuk meningkatkan performa dan pengalaman Anda. 
-            Mohon maaf atas ketidaknyamanannya.
+            Kami sedang melakukan pengembangan lebih lanjut untuk meningkatkan performa dan pengalaman Anda. 
           </p>
         </div>
 

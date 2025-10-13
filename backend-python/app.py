@@ -2,14 +2,14 @@ import os
 import tempfile
 from flask import Flask, request, jsonify, render_template_string
 from dotenv import load_dotenv
-from ocr_llama import IntelligentInvoiceProcessor
+# from ocr_llama import IntelligentInvoiceProcessor
 from handwritingocr import HandwritingOCR
 
 load_dotenv()
 api_key = os.getenv("LLM_API_KEY")
 
 app = Flask(__name__)
-processor_free = IntelligentInvoiceProcessor(groq_api_key=api_key)
+# processor_free = IntelligentInvoiceProcessor(groq_api_key=api_key)
 processor_pro = HandwritingOCR(groq_api_key=api_key)
 
 @app.route("/")
@@ -48,7 +48,7 @@ def process_invoice():
         if user_type == "pro":
             result = processor_pro.process_invoice(temp_path)
         else:
-            result = processor_free.process_invoice(temp_path)
+            result = processor_pro.process_invoice(temp_path)
 
         return jsonify({
             "status": "success",

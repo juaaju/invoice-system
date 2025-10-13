@@ -4,6 +4,5 @@ requests
 groq
 langchain-groq
 langchain
-easyocr
 numpy
 gunicorn
